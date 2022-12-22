@@ -2,7 +2,7 @@ import Foundation
 
 public protocol HTTPRequest {
     func get<Model>(url: String) async throws -> Model where Model: Decodable
-    func post<Model>(url: String, body: Codable) async throws -> Model where Model: Decodable
+    func post<Model>(url: String, body: Encodable?) async throws -> Model where Model: Decodable
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
@@ -13,7 +13,7 @@ public struct HTTPRequestImpl: HTTPRequest {
 
     private let session: URLSession
 
-    public func post<Model>(url: String, body: Codable) async throws -> Model where Model: Decodable {
+    public func post<Model>(url: String, body: Encodable? = nil) async throws -> Model where Model: Decodable {
         guard let url = URL(string: url) else {
             throw HTTPRequestError.badUrl
         }
