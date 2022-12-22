@@ -16,12 +16,12 @@ In almost every project i need to make HTTP request (GET, POST...) and then the 
 
 ## Usage
 
-```
+```Swift
 import HTTPRequest
 
 let httpRequest: HTTPRequest = HTTPRequestImpl()
         
-// Trigger a HTTPRequest within a asynchronous context, a Task for example
+    // Trigger a HTTPRequest within a asynchronous context, a Task for example
     Task {
         // You just have to specify the type, here Activity for example. 
         // The result will be automatically parsed by inferring the type automatically.
