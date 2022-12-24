@@ -36,6 +36,6 @@ public struct HTTPRequestImpl: HTTPRequest {
 }
 
 
-enum HTTPRequestError: Error {
-    case requestFailed(response: URLResponse)
+public enum HTTPRequestError: Error {
+    case requestFailed(response: URLResponse?)
 }
