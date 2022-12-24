@@ -1,44 +1,37 @@
 import Foundation
 
 public protocol HTTPRequest {
-    func get<Model>(url: String) async throws -> Model where Model: Decodable
-    func post<Model>(url: String, body: Encodable?) async throws -> Model where Model: Decodable
+    func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType
+    func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws -> ReturnType
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
     
+    private let session: URLSession
+    
     public init(session: URLSession = URLSession.shared) {
         self.session = session
     }
-
-    private let session: URLSession
-
-    public func post<Model>(url: String, body: Encodable? = nil) async throws -> Model where Model: Decodable {
-        guard let url = URL(string: url) else {
-            throw HTTPRequestError.badUrl
-        }
-        
-        var request = URLRequest(url: url)
+    
+    public func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType? = nil) async throws -> ReturnType {
+        var request = request
         request.httpMethod = "POST"
-        
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await handleRequest(request: request)
+    }
+    
+    public func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
+        var request = request
+        request.httpMethod = "GET"
+        return try await handleRequest(request: request)
+    }
+    
+    private func handleRequest<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 else {
             throw HTTPRequestError.requestFailed
         }
-        return try JSONDecoder().decode(Model.self, from: data)
-        
-    }
-    
-    public func get<Model>(url: String) async throws -> Model where Model: Decodable {
-        guard let url = URL(string: url) else {
-            throw HTTPRequestError.badUrl
-        }
-        
-        let (data, response) = try await session.data(from: url)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw HTTPRequestError.requestFailed
-        }
-        return try JSONDecoder().decode(Model.self, from: data)
+        return try JSONDecoder().decode(ReturnType.self, from: data)
     }
 }
 
