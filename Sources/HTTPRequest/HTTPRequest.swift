@@ -29,7 +29,7 @@ public struct HTTPRequestImpl: HTTPRequest {
     private func handleRequest<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 else {
-            throw HTTPRequestError.requestFailed
+            throw HTTPRequestError.requestFailed(response: response)
         }
         return try JSONDecoder().decode(ReturnType.self, from: data)
     }
@@ -37,6 +37,5 @@ public struct HTTPRequestImpl: HTTPRequest {
 
 
 enum HTTPRequestError: Error {
-    case badUrl
-    case requestFailed
+    case requestFailed(response: URLResponse)
 }
