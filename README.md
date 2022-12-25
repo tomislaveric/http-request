@@ -27,7 +27,7 @@ import HTTPRequest
         }
         
         var request = URLRequest(url: url)
-        // You can set custom headers here if you want
+        // You can set custom headers within URLRequest
         request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
         return try await httpRequest.get(request: request)
     }
@@ -39,8 +39,6 @@ import HTTPRequest
         }
         
         var request = URLRequest(url: url)
-        // You can set custom headers here if you want
-        request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
         try await httpRequest.post(request: request, body: activity)
     }
     
@@ -51,8 +49,6 @@ import HTTPRequest
         }
         
         var request = URLRequest(url: url)
-        // You can set custom headers here if you want
-        request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
         return try await httpRequest.post(request: request, body: activity)
     }
     
