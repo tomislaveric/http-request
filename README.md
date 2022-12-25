@@ -1,7 +1,7 @@
 # HTTPRequest
 
-Yet another HTTPRequest wrapper. HTTP requests are written with async/await. 
-So far GET and POST requests are possible
+Yet another HTTPRequest wrapper. HTTP requests are fully written with async/await. 
+So far GET and POST requests are available
 
 ## Why do i need this package?
 
@@ -9,23 +9,59 @@ In almost every project i need to make HTTP request (GET, POST...) and then the 
 
 ## Installation
 
-1. Within your project, click on `File -> Add Packages` and paste into the input this repo URL `https://github.com/tomislaveric/HTTPRequest`. Click on `Add Package`.
-2. Click on the Target of your project. Within General tab you will see **Frameworks, Libraries, and Embedded Content** Add HTTPRequest there as dependency. Thats it!
+1. Within your project, click on `File -> Add Packages` and paste this repo URL `https://github.com/tomislaveric/http-request`. 
+2. Click on `Add Package`.
 
-![AddSwiftPackage](images/addSwiftPackage.jpg)
-
-## Usage
+## Usage example
 
 ```Swift
 import HTTPRequest
 
-let httpRequest: HTTPRequest = HTTPRequestImpl()
+    //Instantiate HTTPRequest
+    private let httpRequest: HTTPRequest = HTTPRequestImpl()
+    
+    //GET example
+    func getActivity() async throws -> Activity {
+        guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
+            throw UrlError.urlStringNotParsable
+        }
         
-    // Trigger a HTTPRequest within a asynchronous context, a Task for example
-    Task {
-        // You just have to specify the type, here Activity for example. 
-        // The result will be automatically parsed by inferring the type automatically.
-        let activity: Activity = try await httpRequest.get(url: "https://www.boredapi.com/api/activity")
+        var request = URLRequest(url: url)
+        // You can set custom headers here if you want
+        request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
+        return try await httpRequest.get(request: request)
+    }
+    
+    //POST example without return type
+    func sendActivity(activity: Activity) async throws {
+        guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
+            throw UrlError.urlStringNotParsable
+        }
+        
+        var request = URLRequest(url: url)
+        // You can set custom headers here if you want
+        request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
+        try await httpRequest.post(request: request, body: activity)
+    }
+    
+    //POST example with return type
+    func sendActivity(activity: Activity) async throws -> Activity {
+        guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
+            throw UrlError.urlStringNotParsable
+        }
+        
+        var request = URLRequest(url: url)
+        // You can set custom headers here if you want
+        request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
+        return try await httpRequest.post(request: request, body: activity)
+    }
+    
+    struct Activity: Decodable, Encodable {
+        let activity: String
+    }
+
+    enum UrlError: Error {
+        case urlStringNotParsable
     }
 ```
 
@@ -41,4 +77,4 @@ If you encounter errors like this in XCodes console, you need to go to toggle `i
 
 ## Roadmap
 
-[ ] Add handling for custom headers
+[x] Add handling for custom headers
