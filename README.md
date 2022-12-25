@@ -22,34 +22,31 @@ import HTTPRequest
     
     //GET example
     func getActivity() async throws -> Activity {
-        guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
-            throw UrlError.urlStringNotParsable
-        }
-        
-        var request = URLRequest(url: url)
-        // You can set custom headers within URLRequest
+        var request = URLRequest(url: try endpoint)
+        // You can set custom headers here if you want
         request.setValue("Bearer someToken", forHTTPHeaderField: "Authorization")
         return try await httpRequest.get(request: request)
     }
     
     //POST example without return type
     func sendActivity(activity: Activity) async throws {
-        guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
-            throw UrlError.urlStringNotParsable
-        }
-        
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: try endpoint)
         try await httpRequest.post(request: request, body: activity)
     }
     
     //POST example with return type
     func sendActivity(activity: Activity) async throws -> Activity {
-        guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
-            throw UrlError.urlStringNotParsable
-        }
-        
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: try endpoint)
         return try await httpRequest.post(request: request, body: activity)
+    }
+    
+    private var endpoint: URL {
+        get throws {
+            guard let url = URL(string: "https://www.boredapi.com/api/acvtivity") else {
+                throw UrlError.urlStringNotParsable
+            }
+            return url
+        }
     }
     
     struct Activity: Decodable, Encodable {
