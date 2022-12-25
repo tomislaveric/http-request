@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "HTTPRequest",
+    name: "http-request",
     platforms: [
         .macOS(.v10_15),
     ],
