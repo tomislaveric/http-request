@@ -4,7 +4,7 @@ public protocol HTTPRequest {
     func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType
     func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws -> ReturnType
     func post<BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws
-    func post(request: URLRequest) async throws
+    func post<ReturnType>(request: URLRequest) -> ReturnType async throws
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
