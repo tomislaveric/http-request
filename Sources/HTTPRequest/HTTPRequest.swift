@@ -4,7 +4,7 @@ public protocol HTTPRequest {
     func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType
     func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws -> ReturnType
     func post<BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws
-    func post<ReturnType>(request: URLRequest) -> ReturnType async throws
+    func post<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
@@ -30,10 +30,10 @@ public struct HTTPRequestImpl: HTTPRequest {
         try await handleRequest(request: request)
     }
     
-    public func post(request: URLRequest) async throws {
+    public func post<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
         var request = request
         request.httpMethod = "POST"
-        try await handleRequest(request: request)
+        return try await handleRequest(request: request)
     }
     
     public func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
