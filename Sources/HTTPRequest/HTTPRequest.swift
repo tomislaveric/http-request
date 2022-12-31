@@ -22,10 +22,12 @@ public struct HTTPRequestImpl: HTTPRequest {
         return try await handleRequest(request: request)
     }
     
-    public func post<BodyType: Encodable>(request: URLRequest, body: BodyType) async throws {
+    public func post<BodyType: Encodable>(request: URLRequest, body: BodyType? = nil) async throws {
         var request = request
         request.httpMethod = "POST"
-        request.httpBody = try JSONEncoder().encode(body)
+        if let body = body {
+            request.httpBody = try JSONEncoder().encode(body)
+        }
         
         try await handleRequest(request: request)
     }
