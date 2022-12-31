@@ -18,7 +18,9 @@ public struct HTTPRequestImpl: HTTPRequest {
     public func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType? = nil) async throws -> ReturnType {
         var request = request
         request.httpMethod = "POST"
-        request.httpBody = try JSONEncoder().encode(body)
+        if let body = body {
+            request.httpBody = try JSONEncoder().encode(body)
+        }
         return try await handleRequest(request: request)
     }
     
@@ -28,7 +30,6 @@ public struct HTTPRequestImpl: HTTPRequest {
         if let body = body {
             request.httpBody = try JSONEncoder().encode(body)
         }
-        
         try await handleRequest(request: request)
     }
     
