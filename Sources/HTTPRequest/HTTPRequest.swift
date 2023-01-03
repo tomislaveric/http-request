@@ -46,18 +46,20 @@ public struct HTTPRequestImpl: HTTPRequest {
     }
     
     private func handleRequest(request: URLRequest) async throws {
-        let (_, response) = try await session.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 else {
-            throw HTTPRequestError.requestFailed(response: response)
-        }
+        _ = try await handleResponse(request: request)
     }
     
     private func handleRequest<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
+        let data = try await handleResponse(request: request)
+        return try JSONDecoder().decode(ReturnType.self, from: data)
+    }
+    
+    private func handleResponse(request: URLRequest) async throws -> Data {
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 else {
             throw HTTPRequestError.requestFailed(response: response)
         }
-        return try JSONDecoder().decode(ReturnType.self, from: data)
+        return data
     }
 }
 
