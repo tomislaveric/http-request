@@ -1,10 +1,34 @@
 import Foundation
 
 public protocol HTTPRequest {
-    func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType
-    func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws -> ReturnType
-    func post<BodyType: Encodable>(request: URLRequest, body: BodyType?) async throws
-    func post<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType
+    
+    /// Sends a GET request to a specific URL and returns the decoded type
+    /// - Parameters
+    ///     - url: The URL for the request.
+    ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"]
+    /// - Returns:The decoded type by type inference
+    func get<ReturnType: Decodable>(url: URL?, header: [String:String]?) async throws -> ReturnType
+    
+    /// Sends a POST request to a specific URL, with a body, optional header and returns the decoded type
+    /// - Parameters
+    ///     - url: The URL for the request.
+    ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
+    ///     - body: The body to send the POST request, it has to conform to Encodable.
+    func post<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]?, body: BodyType) async throws -> ReturnType
+    
+    /// Sends a POST request to a specific URL with option header and returns the decoded type
+    /// - Parameters
+    ///     - url: The URL for the request.
+    ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
+    /// - Returns:The decoded type by type inference
+    func post<ReturnType: Decodable>(url: URL?, header: [String:String]?) async throws -> ReturnType
+    
+    /// Sends a POST request to a specific URL with option header and returns the decoded type
+    /// - Parameters
+    ///     - url: The URL for the request.
+    ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
+    ///     - body: The body to send the POST request, it has to conform to Encodable.
+    func post<BodyType: Encodable>(url: URL?, header: [String:String]?, body: BodyType) async throws
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
@@ -15,43 +39,42 @@ public struct HTTPRequestImpl: HTTPRequest {
         self.session = session
     }
     
-    public func post<ReturnType: Decodable, BodyType: Encodable>(request: URLRequest, body: BodyType? = nil) async throws -> ReturnType {
-        var request = request
-        request.httpMethod = "POST"
-        if let body = body {
-            request.httpBody = try JSONEncoder().encode(body)
+    public func post<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]? = nil, body: BodyType) async throws -> ReturnType {
+        let request = try createRequest(url: url, of: .POST, with: header, bodyData: try JSONEncoder().encode(body))
+        let data = try await handleResponse(request: request)
+        guard let decoded: ReturnType = try decode(response: data) else {
+            throw HTTPRequestError.couldNotDecode
         }
-        return try await handleRequest(request: request)
+        return decoded
     }
     
-    public func post<BodyType: Encodable>(request: URLRequest, body: BodyType? = nil) async throws {
-        var request = request
-        request.httpMethod = "POST"
-        if let body = body {
-            request.httpBody = try JSONEncoder().encode(body)
+    public func post<ReturnType: Decodable>(url: URL?, header: [String:String]? = nil) async throws -> ReturnType {
+        let request = try createRequest(url: url, of: .POST, with: header, bodyData: nil)
+        let data = try await handleResponse(request: request)
+        guard let decoded: ReturnType = try decode(response: data) else {
+            throw HTTPRequestError.couldNotDecode
         }
-        try await handleRequest(request: request)
+        return decoded
     }
     
-    public func post<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
-        var request = request
-        request.httpMethod = "POST"
-        return try await handleRequest(request: request)
-    }
-    
-    public func get<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
-        var request = request
-        request.httpMethod = "GET"
-        return try await handleRequest(request: request)
-    }
-    
-    private func handleRequest(request: URLRequest) async throws {
+    public func post<BodyType: Encodable>(url: URL?, header: [String:String]? = nil, body: BodyType) async throws {
+        let request = try createRequest(url: url, of: .POST, with: header, bodyData: try JSONEncoder().encode(body))
         _ = try await handleResponse(request: request)
     }
     
-    private func handleRequest<ReturnType: Decodable>(request: URLRequest) async throws -> ReturnType {
+    public func get<ReturnType: Decodable>(url: URL?, header: [String: String]? = nil) async throws -> ReturnType {
+        let request = try createRequest(url: url, of: .GET, with: header)
         let data = try await handleResponse(request: request)
-        return try JSONDecoder().decode(ReturnType.self, from: data)
+        guard let decoded: ReturnType = try decode(response: data) else {
+            throw HTTPRequestError.couldNotDecode
+        }
+        return decoded
+    }
+    
+    private func decode<ReturnType: Decodable>(response: Data) throws -> ReturnType {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(ReturnType.self, from: response)
     }
     
     private func handleResponse(request: URLRequest) async throws -> Data {
@@ -61,9 +84,29 @@ public struct HTTPRequestImpl: HTTPRequest {
         }
         return data
     }
+    
+    private func createRequest(url: URL?, of type: RequestType, with header: [String: String]?, bodyData: Data? = nil) throws -> URLRequest {
+        guard let url = url else {
+            throw HTTPRequestError.badURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = type.rawValue
+        header?.forEach {
+            request.setValue($0.value, forHTTPHeaderField: $0.key)
+        }
+        request.httpBody = bodyData
+        return request
+    }
+    
+    private enum RequestType: String {
+        case GET
+        case POST
+    }
 }
 
 
 public enum HTTPRequestError: Error {
     case requestFailed(response: URLResponse?)
+    case badURL
+    case couldNotDecode
 }
