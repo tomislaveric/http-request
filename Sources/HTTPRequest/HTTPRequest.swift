@@ -91,6 +91,8 @@ public struct HTTPRequestImpl: HTTPRequest {
         }
         var request = URLRequest(url: url)
         request.httpMethod = type.rawValue
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Accept")
         header?.forEach {
             request.setValue($0.value, forHTTPHeaderField: $0.key)
         }
