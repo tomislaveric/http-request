@@ -29,9 +29,24 @@ public protocol HTTPRequest {
     ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
     ///     - body: The body to send the POST request, it has to conform to Encodable.
     func post<BodyType: Encodable>(url: URL?, header: [String:String]?, body: BodyType) async throws
+    /// Sends a PUT request to a specific URL with option header and returns the decoded type
+    /// - Parameters
+    ///     - url: The URL for the request.
+    ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
+    ///     - body: The body to send the PUT request, it has to conform to Encodable.
+    func put<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]?, body: BodyType) async throws -> ReturnType
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
+    public func put<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]? = nil, body: BodyType) async throws -> ReturnType {
+        let request = try createRequest(url: url, of: .PUT, with: header, bodyData: try JSONEncoder().encode(body))
+        let data = try await handleResponse(request: request)
+        guard let decoded: ReturnType = try decode(response: data) else {
+            throw HTTPRequestError.couldNotDecode
+        }
+        return decoded
+    }
+    
     
     private let session: URLSession
     
@@ -103,6 +118,7 @@ public struct HTTPRequestImpl: HTTPRequest {
     private enum RequestType: String {
         case GET
         case POST
+        case PUT
     }
 }
 
