@@ -35,9 +35,24 @@ public protocol HTTPRequest {
     ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
     ///     - body: The body to send the PUT request, it has to conform to Encodable.
     func put<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]?, body: BodyType) async throws -> ReturnType
+    /// Sends a PATCH request to a specific URL with option header and returns the decoded type
+    /// - Parameters
+    ///     - url: The URL for the request.
+    ///     - header: A dictionary where you can specify request headers, like ["Authorization":"Bearer 123456"].
+    ///     - body: The body to send the PATCH request, it has to conform to Encodable.
+    func patch<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]?, body: BodyType) async throws -> ReturnType
 }
 
 public struct HTTPRequestImpl: HTTPRequest {
+    public func patch<ReturnType, BodyType>(url: URL?, header: [String : String]?, body: BodyType) async throws -> ReturnType where ReturnType : Decodable, BodyType : Encodable {
+        let request = try createRequest(url: url, of: .PATCH, with: header, bodyData: try JSONEncoder().encode(body))
+        let data = try await handleResponse(request: request)
+        guard let decoded: ReturnType = try decode(response: data) else {
+            throw HTTPRequestError.couldNotDecode
+        }
+        return decoded
+    }
+    
     public func put<ReturnType: Decodable, BodyType: Encodable>(url: URL?, header: [String:String]? = nil, body: BodyType) async throws -> ReturnType {
         let request = try createRequest(url: url, of: .PUT, with: header, bodyData: try JSONEncoder().encode(body))
         let data = try await handleResponse(request: request)
@@ -119,6 +134,7 @@ public struct HTTPRequestImpl: HTTPRequest {
         case GET
         case POST
         case PUT
+        case PATCH
     }
 }
 

@@ -1,7 +1,7 @@
 # HTTPRequest
 
 Yet another HTTPRequest wrapper. HTTP requests are fully written with async/await. 
-So far GET and POST requests are available
+So far GET, POST, PUT and PATCH requests are available
 
 ## Why do i need this package?
 
@@ -71,3 +71,5 @@ If you encounter errors like this in XCodes console, you need to go to toggle `i
 ## Roadmap
 
 [x] Add handling for custom headers
+[x] Add PUT requests
+[x] Add PATCH requests
